@@ -1,0 +1,5 @@
+﻿  func.cpp
+C:\Users\Kazue\Documents\GitHub\LLGMN\LLGMN\func.cpp(31,22): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+C:\Users\Kazue\Documents\GitHub\LLGMN\LLGMN\func.cpp(33,28): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+C:\Users\Kazue\Documents\GitHub\LLGMN\LLGMN\func.cpp(122,19): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+  LLGMN.vcxproj -> C:\Users\Kazue\Documents\GitHub\LLGMN\Debug\LLGMN.exe
