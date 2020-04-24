@@ -6,34 +6,23 @@ void LLGMN(vector<vector<double>> Tx, vector<vector<double>> Ty, vector<vector<v
 
     vector<vector<vector<double>>> SndIn;
     vector<vector<vector<double>>> SndOut;   //第2層入出力
-    //SndIn, Out初期化(Outは = 0いらないと思うけど念のため)
+    //SndIn, Outの領域確保
     SndIn.resize(dataN);    SndOut.resize(dataN);
     for (int n = 0; n < dataN; n++) {
         SndIn[n].resize(classNum);   SndOut[n].resize(classNum);
         for (int k = 0; k < classNum; k++) {
             SndIn[n][k].resize(componentNum);   SndOut[n][k].resize(componentNum);
-            for (int m = 0; m < componentNum; m++) {
-                SndIn[n][k][m] = 0; SndOut[n][k][m] = 0;
-            }
         }
     }
     //重み初期化
     wInit(w, H, classNum, componentNum);
-    //for (int h = 0; h < H; h++) {
-    //    for (int k = 0; k < classNum; k++) {
-    //        for (int m = 0; m < componentNum; m++) {
-    //            printf("(%d, %d, %d): ", h, k, m);
-    //            cout << w[h][k][m] << endl;
-    //        }
-    //    }
-    //}
+
     for(int count = 0; count < COUNTMAX; count++){
-        int error, t = Threshold;
+        double error;
         forward(Tx, X, Y, SndIn, SndOut, dataN, w, classNum, componentNum, dimention, H);
         error = callocError(Y, Ty, dataN, classNum);
-        //cout << "error: " << error << endl;
-        printf("%f %f %f\n", Y[0][0], Y[0][1], Y[0][2]);
-        if (error < t)   break;
+        cout << "#" << count << ": " << error << endl;
+        if (error < Threshold)   break;
         backword(X, Y, SndOut, Ty, dataN, w, H, classNum, componentNum);
     }
     
@@ -43,6 +32,15 @@ void LLGMN(vector<vector<double>> Tx, vector<vector<double>> Ty, vector<vector<v
 void forward(vector<vector<double>> x, vector<vector<double>>& X, vector<vector<double>>& Y, vector<vector<vector<double>>>& SndIn, vector<vector<vector<double>>>& SndOut, int dataSize, vector<vector<vector<double>>>& w, int classNum, int componentNum, int dimention, int H) {
     //Snd[dataN][class][component]
     double deno = 0;    //出力計算の際の分母
+
+    //毎回初期化
+    for (int n = 0; n < dataSize; n++) {
+        for (int k = 0; k < classNum; k++) {
+            for (int m = 0; m < componentNum; m++) {
+                SndIn[n][k][m] = 0; SndOut[n][k][m] = 0;
+            }
+        }
+    }
     for (int dataN = 0; dataN < dataSize; dataN++) {    //dataN:データセット番号
         int g;
         for (int l = 0; l < 3; l++) {   //l:層の数を表す
@@ -86,6 +84,7 @@ void forward(vector<vector<double>> x, vector<vector<double>>& X, vector<vector<
                 }
                 //出力SndOutの計算
                 //出力計算式の分母を計算
+                deno = 0;
                 for (int k = 0; k < classNum; k++) {
                     for (int m = 0; m < componentNum; m++) {    //componentNumはクラスごとに違うかも
                         deno += exp(SndIn[dataN][k][m]);
@@ -105,6 +104,7 @@ void forward(vector<vector<double>> x, vector<vector<double>>& X, vector<vector<
                     Y[dataN] [k] = 0;
                 }
                 //入力かつ出力の計算
+                //要修正！
                 for (int k = 0; k < classNum; k++) {
                     for (int m = 0; m < componentNum; m++) {    //componentNumはクラスごとに違うかも
                         Y[dataN][k] += SndOut[dataN][k][m];
@@ -119,7 +119,7 @@ void forward(vector<vector<double>> x, vector<vector<double>>& X, vector<vector<
 }
 
 void backword(vector<vector<double>> X, vector<vector<double>> Y, vector<vector<vector<double>>> SndOut, vector<vector<double>> Ty, int dataSize, vector<vector<vector<double>>>& w, int H, int classNum, int componentNum) {
-    int studyrate = STUDYRATE;
+    double studyrate = STUDYRATE;
     vector<vector<vector<double>>> dJdw;    //dJdw[H][classNum][componentNum]
 
     //領域の確保
@@ -143,8 +143,10 @@ void backword(vector<vector<double>> X, vector<vector<double>> Y, vector<vector<
             }
         }
     }
-
-
+    //最終クラス最終コンポーネントへの重みはすべてゼロ
+    for (int h = 0; h < H; h++) {
+        w[h][classNum - 1][componentNum - 1] = 0;
+    }
     return;
 }
 
@@ -184,7 +186,7 @@ double callocError(vector<vector<double>> Y, vector<vector<double>> Ty, int data
     double error = 0;
     for (int n = 0; n < dataN; n++) {
         for (int k = 0; k < classNum; k++) {
-            error -= Ty[n][k] * log(Y[n][k]);
+            error += -1 * Ty[n][k] * log(Y[n][k]);
         }
     }
     return error;
